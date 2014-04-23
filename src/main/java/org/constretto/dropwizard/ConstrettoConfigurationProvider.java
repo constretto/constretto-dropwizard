@@ -5,13 +5,16 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import io.dropwizard.configuration.FileConfigurationSourceProvider;
 import org.constretto.internal.resolver.DefaultConfigurationContextResolver;
+import org.constretto.resolver.ConfigurationContextResolver;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.Reader;
 import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.Iterator;
@@ -19,8 +22,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * User: kjeivers
- * Date: 15.04.14
+ * @author kjeivers@gmail.com
  */
 public class ConstrettoConfigurationProvider extends FileConfigurationSourceProvider {
 
@@ -28,7 +30,14 @@ public class ConstrettoConfigurationProvider extends FileConfigurationSourceProv
 
     private Charset charset = DEFAULT_CHARSET;
 
+    private final ConfigurationContextResolver tagResolver;
+
     public ConstrettoConfigurationProvider() {
+        this(new DefaultConfigurationContextResolver());
+    }
+
+    public ConstrettoConfigurationProvider(ConfigurationContextResolver tagResolver) {
+        this.tagResolver = tagResolver;
     }
 
     /**
@@ -39,8 +48,15 @@ public class ConstrettoConfigurationProvider extends FileConfigurationSourceProv
      */
     @Override
     public InputStream open(String path) throws IOException {
-        Map<PropertyKey, String> lines = readLines(path);
-        List<String> tags = getTags();
+        return open(new InputStreamReader(super.open(path), charset));
+    }
+
+    /**
+     * This method is present for easier testability
+     */
+    InputStream open(Reader reader) throws IOException {
+        Map<PropertyKey, String> lines = readLines(reader);
+        List<String> tags = tagResolver.getTags();
         List<String> filteredLines = filterLines(lines, tags);
         return toInputStream(filteredLines);
     }
@@ -104,29 +120,21 @@ public class ConstrettoConfigurationProvider extends FileConfigurationSourceProv
         for (String line : filteredLines) {
             baos.write(line.getBytes(charset));
             baos.write("\n".getBytes(charset));
-            System.out.println(line);
         }
         return new ByteArrayInputStream(baos.toByteArray());
     }
 
     /**
-     * @return the list of active constretto tags
-     */
-    private List<String> getTags() {
-        return new DefaultConfigurationContextResolver().getTags();
-    }
-
-    /**
-     * @param path
+     * @param reader for the constretto-annotated configuration source
      * @return an ordered map of the lines in the configuration file
      * @throws IOException
      */
-    private Map<PropertyKey, String> readLines(String path) throws IOException {
-        BufferedReader reader = new BufferedReader(new InputStreamReader(super.open(path), charset));
+    private Map<PropertyKey, String> readLines(Reader reader) throws IOException {
+        BufferedReader br = new BufferedReader(reader);
         Map<PropertyKey,String> lines = Maps.newLinkedHashMap();
         int lineNumber = 0;
-        while (reader.ready()) {
-            String line = reader.readLine();
+        String line;
+        while (br.ready() && (line = br.readLine()) != null) {
             lineNumber++;
             String trimmed = line.trim();
             int indexOfEquals = trimmed.indexOf(':');

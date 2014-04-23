@@ -4,7 +4,7 @@ import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 
 /**
- * @author kjiv
+ * @author kjeivers@gmail.com
  */
 public class ConstrettoBundle<T> implements io.dropwizard.ConfiguredBundle<T> {
     @Override
