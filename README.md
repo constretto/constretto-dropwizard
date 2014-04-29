@@ -47,6 +47,12 @@ Add the dependency to your pom file:
     <dependency>
         <groupId>org.constretto</groupId>
         <artifactId>constretto-dropwizard</artifactId>
-        <version>0.1-SNAPSHOT</version>
+        <version>0.1</version>
     </dependency>
 ```
+
+Version 0.1
+----------------
+ * Supports basic replacement of tagged attributes.
+ * Tagging uses the '@' sign (which makes the text illegal yaml syntax)
+ * Note: does not support property lines that have duplicate names (e.g. two 'password' fields in different parts of the structure)
