@@ -66,12 +66,36 @@ public class ConstrettoConfigurationProviderTest {
         assertThat(config.scalar).isEqualTo("stagingVal");
     }
 
+    @Test
+    public void testStruct() throws IOException, ConfigurationException {
+        when(tagResolver.getTags()).thenReturn(Arrays.asList("testing"));
+
+        TestConfiguration config = factory.build(provider,
+                "struct: { \n" +
+                "  val: untagged \n" +
+                "  @testing.val: testing \n" +
+                "}\n"
+        );
+        assertThat(config).isNotNull();
+        assertThat(config.struct).isNotNull();
+        assertThat(config.struct.val).isEqualTo("testing");
+    }
+
     public static class TestConfiguration {
         @JsonProperty
         public String scalar;
 
         @JsonProperty
+        public Structure struct;
+
+        @JsonProperty
         public List<String> list;
+
+    }
+
+    public static class Structure {
+        @JsonProperty
+        public String val;
     }
 
 }

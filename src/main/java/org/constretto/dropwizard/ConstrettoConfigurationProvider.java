@@ -1,12 +1,15 @@
 package org.constretto.dropwizard;
 
+import com.google.common.base.Function;
 import com.google.common.base.Optional;
+import com.google.common.collect.FluentIterable;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import io.dropwizard.configuration.FileConfigurationSourceProvider;
 import org.constretto.internal.resolver.DefaultConfigurationContextResolver;
 import org.constretto.resolver.ConfigurationContextResolver;
 
+import javax.annotation.Nullable;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -61,11 +64,31 @@ public class ConstrettoConfigurationProvider extends FileConfigurationSourceProv
         return toInputStream(filteredLines);
     }
 
+    private List<String> removeTags(Map<PropertyKey, String> lines) {
+        return null;
+    }
+
     private List<String> filterLines(Map<PropertyKey, String> lines, List<String> tags) {
         Map<PropertyKey, String> copy = Maps.newLinkedHashMap(lines);
         removeInactiveTaggedLines(copy, tags);
         removeOverriddenLines(copy, tags);
-        return toList(copy.values());
+        return toList(untagLines(copy.values()));
+    }
+
+    private Collection<String> untagLines(Collection<String> values) {
+        return FluentIterable.from(values)
+                .transform(new Function<String, String>() {
+                    @Nullable
+                    @Override
+                    public String apply(@Nullable String input) {
+                        if (input != null && input.trim().startsWith("@") && input.indexOf('.') != -1) {
+                            return input.substring(0, input.indexOf('@')) + input.substring(input.indexOf('.') + 1, input.length());
+                        } else {
+                            return input;
+                        }
+                    }
+                })
+                .toList();
     }
 
     private List<String> toList(Collection<String> prefixedLines) {
