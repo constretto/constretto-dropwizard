@@ -3,7 +3,7 @@ package org.constretto.dropwizard;
 import com.google.common.base.Function;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.Lists;
-import io.dropwizard.configuration.FileConfigurationSourceProvider;
+import io.dropwizard.configuration.ConfigurationSourceProvider;
 
 import javax.annotation.Nullable;
 import java.io.BufferedReader;
@@ -19,13 +19,15 @@ import java.util.List;
 /**
  * @author kjeivers@gmail.com
  */
-public class ConstrettoConfigurationProvider extends FileConfigurationSourceProvider {
+public class ConstrettoConfigurationProvider implements ConfigurationSourceProvider {
 
     private static final Charset DEFAULT_CHARSET = Charset.forName("UTF-8");
+    private final ConfigurationSourceProvider source;
 
     private Charset charset = DEFAULT_CHARSET;
 
-    public ConstrettoConfigurationProvider() {
+    public ConstrettoConfigurationProvider(ConfigurationSourceProvider source) {
+        this.source = source;
     }
 
     /**
@@ -36,7 +38,7 @@ public class ConstrettoConfigurationProvider extends FileConfigurationSourceProv
      */
     @Override
     public InputStream open(String path) throws IOException {
-        return open(new InputStreamReader(super.open(path), charset));
+        return open(new InputStreamReader(source.open(path), charset));
     }
 
     /**

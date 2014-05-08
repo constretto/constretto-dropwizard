@@ -4,20 +4,22 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dropwizard.configuration.ConfigurationException;
 import io.dropwizard.configuration.ConfigurationFactory;
+import io.dropwizard.configuration.ConfigurationSourceProvider;
 import org.constretto.resolver.ConfigurationContextResolver;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.mockito.Mockito;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
 import javax.validation.Validation;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringReader;
 import java.util.Arrays;
 import java.util.List;
 
 import static org.fest.assertions.Assertions.assertThat;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.when;
 
 /**
@@ -27,17 +29,15 @@ public class ConstrettoConfigurationFactoryTest {
 
     ConstrettoConfigurationProvider provider;
     ConfigurationFactory<TestConfiguration> factory;
+    @Mock
     ConfigurationContextResolver tagResolver;
+    @Mock
+    ConfigurationSourceProvider source;
 
     @Before
     public void setup() {
-        tagResolver = Mockito.mock(ConfigurationContextResolver.class);
-        provider = new ConstrettoConfigurationProvider() {
-            @Override
-            public InputStream open(String path) throws IOException {
-                return super.open(new StringReader(path));
-            }
-        };
+        MockitoAnnotations.initMocks(this);
+        provider = new ConstrettoConfigurationProvider(source);
         factory = new ConstrettoConfigurationFactory<>(
                 TestConfiguration.class,
                 Validation.buildDefaultValidatorFactory().getValidator(),
@@ -48,10 +48,11 @@ public class ConstrettoConfigurationFactoryTest {
 
     @Test
     public void testNoActiveTagsWithRootScalar() throws IOException, ConfigurationException {
-        TestConfiguration config = factory.build(provider,
+        whenOpenSource(
                 "scalar: testVal \n" +
                 ".staging.scalar: stagingVal"
         );
+        TestConfiguration config = factory.build(provider, "path");
         assertThat(config).isNotNull();
         assertThat(config.scalar).isEqualTo("testVal");
     }
@@ -59,10 +60,10 @@ public class ConstrettoConfigurationFactoryTest {
     @Test
     public void testActiveTagWithRootScalar() throws IOException, ConfigurationException {
         when(tagResolver.getTags()).thenReturn(Arrays.asList("staging"));
-        TestConfiguration config = factory.build(provider,
+        whenOpenSource(
                 "scalar: testVal \n" +
-                ".staging.scalar: stagingVal"
-        );
+                ".staging.scalar: stagingVal");
+        TestConfiguration config = factory.build(provider, "path");
         assertThat(config).isNotNull();
         assertThat(config.scalar).isEqualTo("stagingVal");
     }
@@ -70,10 +71,10 @@ public class ConstrettoConfigurationFactoryTest {
     @Test
     public void testTaggedPropertyFirst() throws IOException, ConfigurationException {
         when(tagResolver.getTags()).thenReturn(Arrays.asList("staging"));
-        TestConfiguration config = factory.build(provider,
+        whenOpenSource(
                 ".staging.scalar: stagingVal \n" +
-                "scalar: testVal"
-        );
+                "scalar: testVal");
+        TestConfiguration config = factory.build(provider, "path");
         assertThat(config).isNotNull();
         assertThat(config.scalar).isEqualTo("stagingVal");
     }
@@ -82,8 +83,7 @@ public class ConstrettoConfigurationFactoryTest {
     @Test
     public void testRepeatedTagsInStruct() throws IOException, ConfigurationException {
         when(tagResolver.getTags()).thenReturn(Arrays.asList("testing"));
-
-        TestConfiguration config = factory.build(provider,
+        whenOpenSource(
                 "struct1: \n" +
                 "  val: untagged \n" +
                 "  .testing.val: testing1 \n" +
@@ -95,8 +95,8 @@ public class ConstrettoConfigurationFactoryTest {
                 "struct3: \n" +
                 "  val: untagged \n" +
                 "  .staging.val: testing3 \n" +
-                "\n"
-        );
+                "\n");
+        TestConfiguration config = factory.build(provider, "path");
         assertThat(config).isNotNull();
         assertThat(config.struct1).isNotNull();
         assertThat(config.struct1.val).isEqualTo("testing1");
@@ -111,8 +111,7 @@ public class ConstrettoConfigurationFactoryTest {
     @Test
     public void testList() throws IOException, ConfigurationException {
         when(tagResolver.getTags()).thenReturn(Arrays.asList("testing"));
-
-        TestConfiguration config = factory.build(provider,
+        whenOpenSource(
                 "struct: \n" +
                 "  val: untagged \n" +
                 "  .testing.val : testing \n" +
@@ -124,8 +123,8 @@ public class ConstrettoConfigurationFactoryTest {
                 "       val : str2 \n " +
                 "       .testing.ival : 102 \n" +
                 "       ival : 2 \n" +
-                "\n"
-        );
+                "\n");
+        TestConfiguration config = factory.build(provider, "path");
         assertThat(config).isNotNull();
         assertThat(config.list).isNotNull();
         assertThat(config.list).hasSize(2);
@@ -156,6 +155,10 @@ public class ConstrettoConfigurationFactoryTest {
         public String val;
         @JsonProperty
         public Integer ival;
+    }
+
+    private void whenOpenSource(String str) throws IOException {
+        when(source.open(anyString())).thenReturn(new ByteArrayInputStream(str.getBytes()));
     }
 
 }

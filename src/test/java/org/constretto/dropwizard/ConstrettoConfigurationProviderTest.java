@@ -1,24 +1,20 @@
 package org.constretto.dropwizard;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dropwizard.configuration.ConfigurationException;
-import io.dropwizard.configuration.ConfigurationFactory;
-import org.constretto.resolver.ConfigurationContextResolver;
+import io.dropwizard.configuration.ConfigurationSourceProvider;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.mockito.Mockito;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
-import javax.validation.Validation;
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.StringReader;
-import java.util.Arrays;
-import java.util.List;
 
 import static org.fest.assertions.Assertions.assertThat;
-import static org.mockito.Mockito.when;
 
 /**
  * @author kjeivers@gmail.com
@@ -26,104 +22,81 @@ import static org.mockito.Mockito.when;
 public class ConstrettoConfigurationProviderTest {
 
     ConstrettoConfigurationProvider provider;
-    ConfigurationFactory<TestConfiguration> factory;
-    ConfigurationContextResolver tagResolver;
+    @Mock
+    ConfigurationSourceProvider source;
 
     @Before
     public void setup() {
-        tagResolver = Mockito.mock(ConfigurationContextResolver.class);
-        provider = new ConstrettoConfigurationProvider() {
-            @Override
-            public InputStream open(String path) throws IOException {
-                return super.open(new StringReader(path));
-            }
-        };
-        factory = new ConstrettoConfigurationFactory<>(
-                TestConfiguration.class,
-                Validation.buildDefaultValidatorFactory().getValidator(),
-                new ObjectMapper(),
-                "",
-                tagResolver);
+        MockitoAnnotations.initMocks(this);
+        provider = new ConstrettoConfigurationProvider(source);
     }
 
     @Test
     public void testNoActiveTagsWithRootScalar() throws IOException, ConfigurationException {
-        TestConfiguration config = factory.build(provider,
+        assertConverted(
                 "scalar: testVal\n" +
-                "@staging.scalar: stagingVal"
-        );
-        assertThat(config).isNotNull();
-        assertThat(config.scalar).isEqualTo("testVal");
-    }
+                        "@staging.scalar: stagingVal",
 
-    @Test
-    public void testActiveTagWithRootScalar() throws IOException, ConfigurationException {
-        when(tagResolver.getTags()).thenReturn(Arrays.asList("staging"));
-        TestConfiguration config = factory.build(provider,
                 "scalar: testVal\n" +
-                "@staging.scalar: stagingVal"
+                        ".staging.scalar: stagingVal"
         );
-        assertThat(config).isNotNull();
-        assertThat(config.scalar).isEqualTo("stagingVal");
     }
 
     @Test
     public void testStruct() throws IOException, ConfigurationException {
-        when(tagResolver.getTags()).thenReturn(Arrays.asList("testing"));
-
-        TestConfiguration config = factory.build(provider,
+        assertConverted(
                 "struct: \n" +
-                "  val: untagged \n" +
-                "  @testing.val: testing \n" +
-                "\n"
+                        "  val: untagged \n" +
+                        "  @testing.val: testing \n" +
+                        "\n",
+
+                "struct: \n" +
+                        "  val: untagged \n" +
+                        "  .testing.val: testing \n" +
+                        "\n"
         );
-        assertThat(config).isNotNull();
-        assertThat(config.struct).isNotNull();
-        assertThat(config.struct.val).isEqualTo("testing");
     }
 
     @Ignore
     @Test
     public void testList() throws IOException, ConfigurationException {
-        when(tagResolver.getTags()).thenReturn(Arrays.asList("testing"));
-
-        TestConfiguration config = factory.build(provider,
+        assertConverted(
                 "struct: \n" +
-                "  val: untagged \n" +
-                "  @testing.val: testing \n" +
-                "  list: \n" +
-                "     - val:  str1 \n" +
-                "       ival: 1 \n" +
-                "     - val:  str2 \n " +
-                "       @testing.ival: 102 \n" +
-                "       ival: 2 \n" +
-                "\n"
+                        "  val: untagged \n" +
+                        "  @testing.val: testing \n" +
+                        "  list: \n" +
+                        "     - val:  str1 \n" +
+                        "       ival: 1 \n" +
+                        "     - val:  str2 \n " +
+                        "       @testing.ival: 102 \n" +
+                        "       ival: 2 \n" +
+                        "\n",
+
+                "struct: \n" +
+                        "  val: untagged \n" +
+                        "  .testing.val: testing \n" +
+                        "  list: \n" +
+                        "     - val:  str1 \n" +
+                        "       ival: 1 \n" +
+                        "     - val:  str2 \n " +
+                        "       .testing.ival: 102 \n" +
+                        "       ival: 2 \n" +
+                        "\n"
         );
-        assertThat(config).isNotNull();
-        assertThat(config.list).isNotNull();
-        assertThat(config.list).hasSize(2);
-        assertThat(config.list.get(0).ival).isEqualTo(1);
-        assertThat(config.list.get(1).ival).isEqualTo(102);
     }
 
-    public static class TestConfiguration {
-        @JsonProperty
-        public String scalar;
-
-        @JsonProperty
-        public Structure struct;
-
-        @JsonProperty
-        public List<Structure> list;
-
-    }
-
-    public static class Structure {
-        @JsonProperty
-        public String val;
-
-        @JsonProperty
-        public Integer ival;
+    private void assertConverted(String input, String expected) throws IOException {
+        InputStream is = provider.open(new StringReader(input));
+        BufferedReader br = new BufferedReader(new InputStreamReader(is));
+        String result = "";
+        while (br.ready()) {
+            String line = br.readLine();
+            result += line;
+            if (br.ready()) {
+                result += "\n";
+            }
+        }
+        assertThat(result.trim()).isEqualTo(expected.trim());
     }
 
 }

@@ -28,7 +28,7 @@ public class ConstrettoBundle<T extends Configuration> implements io.dropwizard.
 
     @Override
     public void initialize(Bootstrap bootstrap) {
-        bootstrap.setConfigurationSourceProvider(new ConstrettoConfigurationProvider());
+        bootstrap.setConfigurationSourceProvider(new ConstrettoConfigurationProvider(bootstrap.getConfigurationSourceProvider()));
         bootstrap.setConfigurationFactoryFactory(new ConstrettoConfigurationFactoryFactory<T>(tagResolver));
     }
 }
