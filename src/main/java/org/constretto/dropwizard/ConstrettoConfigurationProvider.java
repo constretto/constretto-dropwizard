@@ -6,14 +6,12 @@ import com.google.common.collect.FluentIterable;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import io.dropwizard.configuration.FileConfigurationSourceProvider;
-import org.constretto.internal.resolver.DefaultConfigurationContextResolver;
 import org.constretto.resolver.ConfigurationContextResolver;
 
 import javax.annotation.Nullable;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -34,10 +32,6 @@ public class ConstrettoConfigurationProvider extends FileConfigurationSourceProv
     private Charset charset = DEFAULT_CHARSET;
 
     private final ConfigurationContextResolver tagResolver;
-
-    public ConstrettoConfigurationProvider() {
-        this(new DefaultConfigurationContextResolver());
-    }
 
     public ConstrettoConfigurationProvider(ConfigurationContextResolver tagResolver) {
         this.tagResolver = tagResolver;

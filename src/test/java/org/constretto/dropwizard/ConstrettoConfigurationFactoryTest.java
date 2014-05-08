@@ -23,7 +23,7 @@ import static org.mockito.Mockito.when;
 /**
  * @author kjeivers@gmail.com
  */
-public class ConstrettoConfigurationProviderTest {
+public class ConstrettoConfigurationFactoryTest {
 
     ConstrettoConfigurationProvider provider;
     ConfigurationFactory<TestConfiguration> factory;
@@ -49,8 +49,8 @@ public class ConstrettoConfigurationProviderTest {
     @Test
     public void testNoActiveTagsWithRootScalar() throws IOException, ConfigurationException {
         TestConfiguration config = factory.build(provider,
-                "scalar: testVal\n" +
-                "@staging.scalar: stagingVal"
+                "scalar: testVal \n" +
+                ".staging.scalar: stagingVal"
         );
         assertThat(config).isNotNull();
         assertThat(config.scalar).isEqualTo("testVal");
@@ -60,26 +60,51 @@ public class ConstrettoConfigurationProviderTest {
     public void testActiveTagWithRootScalar() throws IOException, ConfigurationException {
         when(tagResolver.getTags()).thenReturn(Arrays.asList("staging"));
         TestConfiguration config = factory.build(provider,
-                "scalar: testVal\n" +
-                "@staging.scalar: stagingVal"
+                "scalar: testVal \n" +
+                ".staging.scalar: stagingVal"
         );
         assertThat(config).isNotNull();
         assertThat(config.scalar).isEqualTo("stagingVal");
     }
 
     @Test
-    public void testStruct() throws IOException, ConfigurationException {
+    public void testTaggedPropertyFirst() throws IOException, ConfigurationException {
+        when(tagResolver.getTags()).thenReturn(Arrays.asList("staging"));
+        TestConfiguration config = factory.build(provider,
+                ".staging.scalar: stagingVal \n" +
+                "scalar: testVal"
+        );
+        assertThat(config).isNotNull();
+        assertThat(config.scalar).isEqualTo("stagingVal");
+    }
+
+
+    @Test
+    public void testRepeatedTagsInStruct() throws IOException, ConfigurationException {
         when(tagResolver.getTags()).thenReturn(Arrays.asList("testing"));
 
         TestConfiguration config = factory.build(provider,
-                "struct: \n" +
+                "struct1: \n" +
                 "  val: untagged \n" +
-                "  @testing.val: testing \n" +
+                "  .testing.val: testing1 \n" +
+                "\n" +
+                "struct2: \n" +
+                "  val: untagged \n" +
+                "  .testing.val: testing2 \n" +
+                "\n" +
+                "struct3: \n" +
+                "  val: untagged \n" +
+                "  .staging.val: testing3 \n" +
                 "\n"
         );
         assertThat(config).isNotNull();
-        assertThat(config.struct).isNotNull();
-        assertThat(config.struct.val).isEqualTo("testing");
+        assertThat(config.struct1).isNotNull();
+        assertThat(config.struct1.val).isEqualTo("testing1");
+        assertThat(config.struct2).isNotNull();
+        assertThat(config.struct2.val).isEqualTo("testing2");
+        assertThat(config.struct3).isNotNull();
+        assertThat(config.struct3.val).isEqualTo("untagged");
+
     }
 
     @Ignore
@@ -90,13 +115,15 @@ public class ConstrettoConfigurationProviderTest {
         TestConfiguration config = factory.build(provider,
                 "struct: \n" +
                 "  val: untagged \n" +
-                "  @testing.val: testing \n" +
+                "  .testing.val : testing \n" +
                 "  list: \n" +
-                "     - val:  str1 \n" +
+                "     - \n" +
+                "       val : str1 \n" +
                 "       ival: 1 \n" +
-                "     - val:  str2 \n " +
-                "       @testing.ival: 102 \n" +
-                "       ival: 2 \n" +
+                "     - \n" +
+                "       val : str2 \n " +
+                "       .testing.ival : 102 \n" +
+                "       ival : 2 \n" +
                 "\n"
         );
         assertThat(config).isNotNull();
@@ -111,7 +138,13 @@ public class ConstrettoConfigurationProviderTest {
         public String scalar;
 
         @JsonProperty
-        public Structure struct;
+        public Structure struct1;
+
+        @JsonProperty
+        public Structure struct2;
+
+        @JsonProperty
+        public Structure struct3;
 
         @JsonProperty
         public List<Structure> list;
@@ -121,7 +154,6 @@ public class ConstrettoConfigurationProviderTest {
     public static class Structure {
         @JsonProperty
         public String val;
-
         @JsonProperty
         public Integer ival;
     }
