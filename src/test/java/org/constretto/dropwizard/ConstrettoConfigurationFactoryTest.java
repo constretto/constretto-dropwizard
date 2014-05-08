@@ -32,7 +32,7 @@ public class ConstrettoConfigurationFactoryTest {
     @Before
     public void setup() {
         tagResolver = Mockito.mock(ConfigurationContextResolver.class);
-        provider = new ConstrettoConfigurationProvider(tagResolver) {
+        provider = new ConstrettoConfigurationProvider() {
             @Override
             public InputStream open(String path) throws IOException {
                 return super.open(new StringReader(path));
