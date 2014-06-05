@@ -16,10 +16,10 @@
 
     <groupId>org.constretto</groupId>
     <artifactId>constretto-dropwizard</artifactId>
-    <version>0.2</version>
+    <version>0.2.1</version>
 
     <properties>
-        <constretto.version>2.0.3</constretto.version>
+        <constretto.version>2.1.4</constretto.version>
         <dropwizard.version>0.7.0</dropwizard.version>
         <junit.version>4.11</junit.version>
         <mockito.version>1.9.5</mockito.version>
