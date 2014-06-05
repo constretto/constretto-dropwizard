@@ -50,6 +50,10 @@ Add the dependency to your pom file:
     </dependency>
 ```
 
+Version 0.2.1
+----------------
+ * Updated constretto dependencies to 2.1.4
+
 Version 0.2
 ----------------
  * Allows tagging with '.env.' (preferred) in addition to '@env.'. The preferred variant makes it valid yaml syntax.
