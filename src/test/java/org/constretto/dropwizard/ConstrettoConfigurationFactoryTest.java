@@ -7,7 +7,6 @@ import io.dropwizard.configuration.ConfigurationFactory;
 import io.dropwizard.configuration.ConfigurationSourceProvider;
 import org.constretto.resolver.ConfigurationContextResolver;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -84,15 +83,15 @@ public class ConstrettoConfigurationFactoryTest {
     public void testRepeatedTagsInStruct() throws IOException, ConfigurationException {
         when(tagResolver.getTags()).thenReturn(Arrays.asList("testing"));
         whenOpenSource(
-                "struct1: \n" +
-                "  val: untagged \n" +
+                "struct1:                 \n" +
+                "  val: untagged          \n" +
                 "  .testing.val: testing1 \n" +
-                "\n" +
-                "struct2: \n" +
-                "  val: untagged \n" +
+                "                         \n" +
+                "struct2:                 \n" +
+                "  val: untagged          \n" +
                 "  .testing.val: testing2 \n" +
-                "\n" +
-                "struct3: \n" +
+                "                         \n" +
+                "struct3:                 \n" +
                 "  val: untagged \n" +
                 "  .staging.val: testing3 \n" +
                 "\n");
@@ -107,29 +106,52 @@ public class ConstrettoConfigurationFactoryTest {
 
     }
 
-    @Ignore
     @Test
-    public void testList() throws IOException, ConfigurationException {
+    public void testBasicListOfSequence() throws IOException, ConfigurationException {
         when(tagResolver.getTags()).thenReturn(Arrays.asList("testing"));
-        whenOpenSource(
-                "struct: \n" +
-                "  val: untagged \n" +
-                "  .testing.val : testing \n" +
-                "  list: \n" +
-                "     - \n" +
-                "       val : str1 \n" +
-                "       ival: 1 \n" +
-                "     - \n" +
-                "       val : str2 \n " +
-                "       .testing.ival : 102 \n" +
-                "       ival : 2 \n" +
-                "\n");
+        String yml =
+                "list:            \n" +
+                "- .staging:      \n" +
+                "  val     : str1 \n" +
+                "  ival    : 1    \n" +
+                "- .testing:      \n" +
+                "  val     : str2 \n" +
+                "  ival    : 2    \n" +
+                "\n";
+        whenOpenSource(yml);
+        TestConfiguration config = factory.build(provider, "path");
+        assertThat(config).isNotNull();
+        assertThat(config.list).isNotNull();
+        assertThat(config.list).hasSize(1);
+        assertThat(config.list.get(0).val).isEqualTo("str2");
+        assertThat(config.list.get(0).ival).isEqualTo(2);
+    }
+
+    @Test
+    public void testListOfSequence() throws IOException, ConfigurationException {
+        when(tagResolver.getTags()).thenReturn(Arrays.asList("testing"));
+        String yml =
+                "list:            \n" +
+                "- .staging:      \n" +
+                "  val     : str1 \n" +
+                "  ival    : 1    \n" +
+                "- .testing:      \n" +
+                "  val     : str2 \n" +
+                "  ival    : 2    \n" +
+                "- .testing.val     : str3_testing \n" +
+                "  .staging.val     : str3_staging \n" +
+                "  ival    : 3    \n" +
+                "\n";
+
+        whenOpenSource(yml);
         TestConfiguration config = factory.build(provider, "path");
         assertThat(config).isNotNull();
         assertThat(config.list).isNotNull();
         assertThat(config.list).hasSize(2);
-        assertThat(config.list.get(0).ival).isEqualTo(1);
-        assertThat(config.list.get(1).ival).isEqualTo(102);
+        assertThat(config.list.get(0).val).isEqualTo("str2");
+        assertThat(config.list.get(0).ival).isEqualTo(2);
+        assertThat(config.list.get(1).val).isEqualTo("str3_testing");
+        assertThat(config.list.get(1).ival).isEqualTo(3);
     }
 
     public static class TestConfiguration {

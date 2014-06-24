@@ -13,6 +13,18 @@ database:
   .staging.url: jdbc:oracle:thin:@//oracle-staging:1521/name
   .production.url: jdbc:oracle:thin:@//oracle-production:1521/name
 
+logging:
+  appenders:
+    - .testing:
+      type: console
+      threshold: DEBUG
+      target: stdout
+
+    - .staging:
+      type: console
+      threshold: INFO
+      target: stdout
+
 ```
 
 Usage
@@ -49,6 +61,10 @@ Add the dependency to your pom file:
         <version>0.2</version>
     </dependency>
 ```
+
+Version 0.3
+----------------
+ * Supports tagging of list elements
 
 Version 0.2.1
 ----------------

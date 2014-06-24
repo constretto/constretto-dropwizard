@@ -57,7 +57,7 @@ public class ConstrettoConfigurationProvider implements ConfigurationSourceProvi
         @Nullable
         @Override
         public String apply(@Nullable String line) {
-            if (line != null && line.trim().startsWith("@")) {
+            if (line != null && (line.matches("\\s*@.*") || line.matches("\\s*-\\s*@.*"))) {
                 return line.replaceFirst("@", ".");
             } else {
                 return line;
@@ -66,7 +66,7 @@ public class ConstrettoConfigurationProvider implements ConfigurationSourceProvi
     };
 
     /**
-     * @param lines
+     * @param lines The list of lines to concatenate
      * @return an InputStream of the filtered set of lines
      * @throws IOException
      */

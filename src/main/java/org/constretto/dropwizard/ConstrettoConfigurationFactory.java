@@ -2,6 +2,7 @@ package org.constretto.dropwizard;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.snakeyaml.error.Mark;
@@ -18,9 +19,11 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -105,15 +108,53 @@ public class ConstrettoConfigurationFactory<T> extends ConfigurationFactory<T> {
                         resultFields.put(field.getKey(), transform(field.getValue()));
                     }
                 } else if (!resultFields.containsKey(field.getKey())) {
-                    resultFields.put(field.getKey(), transform(field.getValue()));
+                    resultFields.put(field.getKey(), transform(field.getValue(), activeTags));
                 }
             }
             ObjectNode resultNode = onode.objectNode();
             resultNode.putAll(resultFields);
             return resultNode;
+        } else if (node.isArray()) {
+            ArrayNode anode = (ArrayNode) node;
+            Iterator<JsonNode> elts = node.elements();
+            List<JsonNode> resultElts = new ArrayList<>();
+            while (elts.hasNext()) {
+                JsonNode child = elts.next();
+                if (child.isObject() && child.size() > 0) {
+                    Map.Entry<String, JsonNode> firstVal = child.fields().next();
+                    String fieldName = firstVal.getKey();
+                    if (fieldName.startsWith(".") && fieldName.indexOf('.', 1) == -1 && "".equals(firstVal.getValue().asText())) {
+                        String tag = fieldName.substring(1);
+                        if (activeTags.contains(tag)) {
+                            resultElts.add(removeFirstChild(transform(child, activeTags)));
+                        }
+                    } else {
+                        resultElts.add(transform(child, activeTags));
+                    }
+                } else {
+                    resultElts.add(transform(child, activeTags));
+                }
+            }
+            ArrayNode resultNode = anode.arrayNode();
+            resultNode.addAll(resultElts);
+            return resultNode;
         } else {
             return node;
         }
+    }
+
+    /**
+     * Mutates the node by removing first child element
+     * @param node The container node to remove elements for
+     * @return
+     */
+    private JsonNode removeFirstChild(JsonNode node) {
+        Iterator<Map.Entry<String, JsonNode>> fields = node.fields();
+        if (fields.hasNext()) {
+            fields.next();
+            fields.remove();
+        }
+        return node;
     }
 
 

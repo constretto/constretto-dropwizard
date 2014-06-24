@@ -3,7 +3,6 @@ package org.constretto.dropwizard;
 import io.dropwizard.configuration.ConfigurationException;
 import io.dropwizard.configuration.ConfigurationSourceProvider;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -57,32 +56,55 @@ public class ConstrettoConfigurationProviderTest {
         );
     }
 
-    @Ignore
     @Test
-    public void testList() throws IOException, ConfigurationException {
+    public void testBasicListOfSequence() throws IOException, ConfigurationException {
         assertConverted(
-                "struct: \n" +
-                        "  val: untagged \n" +
-                        "  @testing.val: testing \n" +
-                        "  list: \n" +
-                        "     - val:  str1 \n" +
-                        "       ival: 1 \n" +
-                        "     - val:  str2 \n " +
-                        "       @testing.ival: 102 \n" +
-                        "       ival: 2 \n" +
+                "list:            \n" +
+                        "- @staging:      \n" +
+                        "  val     : str1 \n" +
+                        "  ival    : 1    \n" +
+                        "- @testing:      \n" +
+                        "  val     : str2 \n" +
+                        "  ival    : 2    \n" +
                         "\n",
-
-                "struct: \n" +
-                        "  val: untagged \n" +
-                        "  .testing.val: testing \n" +
-                        "  list: \n" +
-                        "     - val:  str1 \n" +
-                        "       ival: 1 \n" +
-                        "     - val:  str2 \n " +
-                        "       .testing.ival: 102 \n" +
-                        "       ival: 2 \n" +
+                "list:            \n" +
+                        "- .staging:      \n" +
+                        "  val     : str1 \n" +
+                        "  ival    : 1    \n" +
+                        "- .testing:      \n" +
+                        "  val     : str2 \n" +
+                        "  ival    : 2    \n" +
                         "\n"
         );
+    }
+
+    @Test
+    public void testListOfSequence() throws IOException, ConfigurationException {
+        assertConverted(
+                "list:            \n" +
+                        "- @staging:      \n" +
+                        "  val     : str1 \n" +
+                        "  ival    : 1    \n" +
+                        "- @testing:      \n" +
+                        "  val     : str2 \n" +
+                        "  ival    : 2    \n" +
+                        "-                \n" +
+                        "  @testing.val     : str3_t \n" +
+                        "  @staging.val     : str3_s \n" +
+                        "  ival    : 3    \n" +
+                        "\n",
+                "list:            \n" +
+                        "- .staging:      \n" +
+                        "  val     : str1 \n" +
+                        "  ival    : 1    \n" +
+                        "- .testing:      \n" +
+                        "  val     : str2 \n" +
+                        "  ival    : 2    \n" +
+                        "-                \n" +
+                        "  .testing.val     : str3_t \n" +
+                        "  .staging.val     : str3_s \n" +
+                        "  ival    : 3    \n" +
+                        "\n");
     }
 
     private void assertConverted(String input, String expected) throws IOException {
