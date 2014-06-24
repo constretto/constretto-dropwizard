@@ -16,7 +16,7 @@
 
     <groupId>org.constretto</groupId>
     <artifactId>constretto-dropwizard</artifactId>
-    <version>0.3</version>
+    <version>0.4-SNAPSHOT</version>
 
     <properties>
         <constretto.version>2.1.4</constretto.version>

@@ -58,7 +58,7 @@ Add the dependency to your pom file:
     <dependency>
         <groupId>org.constretto</groupId>
         <artifactId>constretto-dropwizard</artifactId>
-        <version>0.2</version>
+        <version>0.3</version>
     </dependency>
 ```
 
