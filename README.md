@@ -1,6 +1,8 @@
 Dropwizard Constretto Bundle
 ============================
 
+[![Build Status](https://travis-ci.org/constretto/constretto-dropwizard.svg?branch=master)](https://travis-ci.org/constretto/constretto-dropwizard)
+
 Dropwizard bundle that allows use of constretto tags in yml-configuration like this:
 
 config.yml:
