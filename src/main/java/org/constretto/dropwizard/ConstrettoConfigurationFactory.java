@@ -108,7 +108,10 @@ public class ConstrettoConfigurationFactory<T> extends ConfigurationFactory<T> {
             if (child.isObject() && child.size() > 0) {
                 Map.Entry<String, JsonNode> firstVal = child.fields().next();
                 String fieldName = firstVal.getKey();
-                if (fieldName.startsWith(".") && fieldName.indexOf('.', 1) == -1 && "".equals(firstVal.getValue().asText())) {
+                // if the first child element consists of a constretto-tag and nothing more: '-.production'
+                if (fieldName.startsWith(".") && fieldName.indexOf('.', 1) == -1
+                        && "".equals(firstVal.getValue().asText()))
+                {
                     String tag = fieldName.substring(1);
                     if (activeTags.contains(tag)) {
                         resultElts.add(removeFirstChild(removeInactiveElements(child, activeTags)));
