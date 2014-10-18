@@ -20,7 +20,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -64,7 +64,7 @@ public class ConstrettoConfigurationFactory<T> extends ConfigurationFactory<T> {
         try (InputStream input = sourceProvider.open(checkNotNull(path))) {
             final JsonNode node = mapper.readTree(yamlFactory.createParser(input));
             ByteArrayOutputStream os = new ByteArrayOutputStream();
-            mapper.writeTree(new YAMLFactory().createGenerator(os), transform(node));
+            mapper.writeTree(new YAMLFactory().createGenerator(os), removeInactiveElements(node, tagResolver.getTags()));
             return super.build(new DirectSourceProvider(new ByteArrayInputStream(os.toByteArray())), path);
         } catch (YAMLException e) {
             StringBuilder sb = new StringBuilder(e.getMessage());
@@ -75,6 +75,97 @@ public class ConstrettoConfigurationFactory<T> extends ConfigurationFactory<T> {
             }
             throw new ConstrettoFilterConfigurationException(path, ImmutableSet.of(sb.toString()), e);
         }
+    }
+
+    /**
+     *
+     * @param node The root node to consider
+     * @param activeTags The set of active constretto tags
+     * @return A modified JsonNode tree filtered according to the activeTags
+     */
+    private JsonNode removeInactiveElements(JsonNode node, Collection<String> activeTags) {
+        switch (node.getNodeType()) {
+            case OBJECT:
+                return removeInactiveObjectElements((ObjectNode) node, activeTags);
+            case ARRAY:
+                return removeInactiveArrayElements((ArrayNode) node, activeTags);
+            default:
+                return node;
+        }
+    }
+
+    /**
+     *
+     * @param node An ArrayNode
+     * @param activeTags The set of active constretto tags
+     * @return A new ArrayNode containing the elements that should be present according to the constretto tags
+     */
+    private ArrayNode removeInactiveArrayElements(ArrayNode node, Collection<String> activeTags) {
+        Iterator<JsonNode> elts = node.elements();
+        List<JsonNode> resultElts = new ArrayList<>();
+        while (elts.hasNext()) {
+            JsonNode child = elts.next();
+            if (child.isObject() && child.size() > 0) {
+                Map.Entry<String, JsonNode> firstVal = child.fields().next();
+                String fieldName = firstVal.getKey();
+                if (fieldName.startsWith(".") && fieldName.indexOf('.', 1) == -1 && "".equals(firstVal.getValue().asText())) {
+                    String tag = fieldName.substring(1);
+                    if (activeTags.contains(tag)) {
+                        resultElts.add(removeFirstChild(removeInactiveElements(child, activeTags)));
+                    }
+                } else {
+                    resultElts.add(removeInactiveElements(child, activeTags));
+                }
+            } else {
+                resultElts.add(removeInactiveElements(child, activeTags));
+            }
+        }
+        return node.arrayNode().addAll(resultElts);
+    }
+
+    /**
+     *
+     * @param node An ObjectNode
+     * @param activeTags The set of active constretto tags
+     * @return A new ObjectNode with only the active child elements
+     */
+    private JsonNode removeInactiveObjectElements(ObjectNode node, Collection<String> activeTags) {
+        Iterator<Map.Entry<String, JsonNode>> fields = node.fields();
+        Map<String, JsonNode> resultFields = new LinkedHashMap<>();
+        while(fields.hasNext()) {
+            Map.Entry<String, JsonNode> field = fields.next();
+            String fieldName = field.getKey();
+            if (fieldName.startsWith(".")) {
+                int dot2 = fieldName.indexOf('.', 1);
+                if (dot2 != -1) {
+                    String tag = fieldName.substring(1, dot2);
+                    if (activeTags.contains(tag)) {
+                        String resultFieldName = fieldName.substring(dot2 + 1);
+                        resultFields.put(resultFieldName, removeInactiveElements(field.getValue(), activeTags));
+                    }
+                } else if (!resultFields.containsKey(field.getKey())) {
+                    resultFields.put(field.getKey(), removeInactiveElements(field.getValue(), activeTags));
+                }
+            } else if (!resultFields.containsKey(field.getKey())) {
+                resultFields.put(field.getKey(), removeInactiveElements(field.getValue(), activeTags));
+            }
+        }
+        return node.objectNode().setAll(resultFields);
+    }
+
+    /**
+     * Mutates the node by removing first child element
+     *
+     * @param node The container node to remove elements for
+     * @return The same JsonNode that was provided as input, with the first child element removed
+     */
+    private JsonNode removeFirstChild(JsonNode node) {
+        Iterator<Map.Entry<String, JsonNode>> fields = node.fields();
+        if (fields.hasNext()) {
+            fields.next();
+            fields.remove();
+        }
+        return node;
     }
 
     /**
@@ -105,81 +196,7 @@ public class ConstrettoConfigurationFactory<T> extends ConfigurationFactory<T> {
         public ConstrettoFilterConfigurationException(String path, Set<String> errors, Throwable cause) {
             super(path, errors, cause);
         }
-    }
 
-    private JsonNode transform(JsonNode node) {
-        return transform(node, new HashSet<>(tagResolver.getTags()));
     }
-
-    private JsonNode transform(JsonNode node, Set<String> activeTags) {
-        if (node.isObject()) {
-            ObjectNode onode = (ObjectNode) node;
-            Iterator<Map.Entry<String, JsonNode>> fields = onode.fields();
-            Map<String, JsonNode> resultFields = new LinkedHashMap<>();
-            while(fields.hasNext()) {
-                Map.Entry<String, JsonNode> field = fields.next();
-                String fieldName = field.getKey();
-                if (fieldName.startsWith(".")) {
-                    int dot2 = fieldName.indexOf('.', 1);
-                    if (dot2 != -1) {
-                        String tag = fieldName.substring(1, dot2);
-                        if (activeTags.contains(tag)) {
-                            String resultFieldName = fieldName.substring(dot2 + 1);
-                            resultFields.put(resultFieldName, transform(field.getValue(), activeTags));
-                        }
-                    } else if (!resultFields.containsKey(field.getKey())) {
-                        resultFields.put(field.getKey(), transform(field.getValue()));
-                    }
-                } else if (!resultFields.containsKey(field.getKey())) {
-                    resultFields.put(field.getKey(), transform(field.getValue(), activeTags));
-                }
-            }
-            ObjectNode resultNode = onode.objectNode();
-            resultNode.putAll(resultFields);
-            return resultNode;
-        } else if (node.isArray()) {
-            ArrayNode anode = (ArrayNode) node;
-            Iterator<JsonNode> elts = node.elements();
-            List<JsonNode> resultElts = new ArrayList<>();
-            while (elts.hasNext()) {
-                JsonNode child = elts.next();
-                if (child.isObject() && child.size() > 0) {
-                    Map.Entry<String, JsonNode> firstVal = child.fields().next();
-                    String fieldName = firstVal.getKey();
-                    if (fieldName.startsWith(".") && fieldName.indexOf('.', 1) == -1 && "".equals(firstVal.getValue().asText())) {
-                        String tag = fieldName.substring(1);
-                        if (activeTags.contains(tag)) {
-                            resultElts.add(removeFirstChild(transform(child, activeTags)));
-                        }
-                    } else {
-                        resultElts.add(transform(child, activeTags));
-                    }
-                } else {
-                    resultElts.add(transform(child, activeTags));
-                }
-            }
-            ArrayNode resultNode = anode.arrayNode();
-            resultNode.addAll(resultElts);
-            return resultNode;
-        } else {
-            return node;
-        }
-    }
-
-    /**
-     * Mutates the node by removing first child element
-     *
-     * @param node The container node to remove elements for
-     * @return
-     */
-    private JsonNode removeFirstChild(JsonNode node) {
-        Iterator<Map.Entry<String, JsonNode>> fields = node.fields();
-        if (fields.hasNext()) {
-            fields.next();
-            fields.remove();
-        }
-        return node;
-    }
-
 
 }
