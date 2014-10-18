@@ -8,7 +8,8 @@ import org.constretto.resolver.ConfigurationContextResolver;
 import javax.validation.Validator;
 
 /**
- * @author kjiv
+ * The factory that provides the ConfigurationFactory implementation
+ * @author kjeivers
  */
 public class ConstrettoConfigurationFactoryFactory<T> implements ConfigurationFactoryFactory<T> {
 

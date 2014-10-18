@@ -17,7 +17,14 @@ import java.nio.charset.Charset;
 import java.util.List;
 
 /**
- * @author kjeivers@gmail.com
+ * Responsible for decorate a ConfigurationSourceProvider to support
+ * the use of '@' constretto tag syntax.
+ *
+ * The '@' character makes
+ * invalid YAML syntax, hence the need to transform the raw configuration
+ * content before the YAML-parser is invoked.
+ *
+ * @author kjeivers
  */
 public class ConstrettoConfigurationProvider implements ConfigurationSourceProvider {
 
@@ -31,9 +38,10 @@ public class ConstrettoConfigurationProvider implements ConfigurationSourceProvi
     }
 
     /**
+     * Opens the stream from the underlying ConfigurationProvider and transforms the content
      *
      * @param path the path to the configuration
-     * @return an input stream that has converted '@tag.' to '.tag.'
+     * @return an input stream that has converted '@tagname.' to '.tagname.'
      * @throws IOException
      */
     @Override
@@ -50,13 +58,12 @@ public class ConstrettoConfigurationProvider implements ConfigurationSourceProvi
                         .transform(convertAtSign)
                         .toList()
         );
-
     }
 
-    private static final Function<String,String> convertAtSign = new Function<String, String>() {
-        @Nullable
-        @Override
-        public String apply(@Nullable String line) {
+    private Function<String,String> convertAtSign = new Function<String, String>() {
+            @Nullable
+            @Override
+            public String apply(@Nullable String line) {
             if (line != null && (line.matches("\\s*@.*") || line.matches("\\s*-\\s*@.*"))) {
                 return line.replaceFirst("@", ".");
             } else {
@@ -67,7 +74,7 @@ public class ConstrettoConfigurationProvider implements ConfigurationSourceProvi
 
     /**
      * @param lines The list of lines to concatenate
-     * @return an InputStream of the filtered set of lines
+     * @return an InputStream of the list of lines
      * @throws IOException
      */
     private InputStream toInputStream(List<String> lines) throws IOException {

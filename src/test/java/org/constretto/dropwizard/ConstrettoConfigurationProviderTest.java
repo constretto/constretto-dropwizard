@@ -16,7 +16,7 @@ import java.io.StringReader;
 import static org.fest.assertions.Assertions.assertThat;
 
 /**
- * @author kjeivers@gmail.com
+ * @author kjeivers
  */
 public class ConstrettoConfigurationProviderTest {
 

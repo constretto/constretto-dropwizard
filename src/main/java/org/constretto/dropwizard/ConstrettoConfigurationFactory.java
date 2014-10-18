@@ -30,7 +30,10 @@ import java.util.Set;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * @author kjiv
+ * This class is responsible for filtering the constretto-tagged YAML tree
+ * based on the set of active constretto tags.
+ *
+ * @author kjeivers
  */
 public class ConstrettoConfigurationFactory<T> extends ConfigurationFactory<T> {
 
@@ -38,16 +41,27 @@ public class ConstrettoConfigurationFactory<T> extends ConfigurationFactory<T> {
     private final YAMLFactory yamlFactory;
     private final ConfigurationContextResolver tagResolver;
 
-    public ConstrettoConfigurationFactory(Class<T> klass, Validator validator, ObjectMapper mapper, String propertyPrefix, ConfigurationContextResolver tagResolver) {
+    public ConstrettoConfigurationFactory(Class<T> klass, Validator validator, ObjectMapper mapper,
+                                          String propertyPrefix, ConfigurationContextResolver tagResolver) {
         super(klass, validator, mapper, propertyPrefix);
         this.tagResolver = tagResolver;
         this.mapper = mapper;
         this.yamlFactory = new YAMLFactory();
     }
 
+    /**
+     * Loads, parses, binds, and validates a configuration object.
+     * This implementation filters the YAML tree before delegating to the default ConfigurationFactory
+     *
+     * @param sourceProvider the provider to to use for reading configuration files
+     * @param path     the path of the configuration file
+     * @return a validated configuration object that is filtered according to the set of active constretto tags
+     * @throws IOException            if there is an error reading the file
+     * @throws ConfigurationException if there is an error parsing or validating the file
+     */
     @Override
-    public T build(ConfigurationSourceProvider provider, String path) throws IOException, ConfigurationException {
-        try (InputStream input = provider.open(checkNotNull(path))) {
+    public T build(ConfigurationSourceProvider sourceProvider, String path) throws IOException, ConfigurationException {
+        try (InputStream input = sourceProvider.open(checkNotNull(path))) {
             final JsonNode node = mapper.readTree(yamlFactory.createParser(input));
             ByteArrayOutputStream os = new ByteArrayOutputStream();
             mapper.writeTree(new YAMLFactory().createGenerator(os), transform(node));
@@ -63,8 +77,11 @@ public class ConstrettoConfigurationFactory<T> extends ConfigurationFactory<T> {
         }
     }
 
+    /**
+     * A passthrough ConfigurationSourceProvider that wraps an InputStream.
+     * This is used when invoking the build() method of the superclass.
+     */
     private static class DirectSourceProvider implements ConfigurationSourceProvider {
-
 
         private final InputStream is;
         public DirectSourceProvider(InputStream is) {
@@ -77,6 +94,12 @@ public class ConstrettoConfigurationFactory<T> extends ConfigurationFactory<T> {
         }
 
     }
+
+    /**
+     * A concrete subclass of ConfigurationException.
+     * The exception class used in super (ConfigurationFactory) is not accessible here.
+     * Using ConfigurationValidationException also sounds wrong.
+     */
     private static class ConstrettoFilterConfigurationException extends ConfigurationException {
 
         public ConstrettoFilterConfigurationException(String path, Set<String> errors, Throwable cause) {
@@ -145,6 +168,7 @@ public class ConstrettoConfigurationFactory<T> extends ConfigurationFactory<T> {
 
     /**
      * Mutates the node by removing first child element
+     *
      * @param node The container node to remove elements for
      * @return
      */
