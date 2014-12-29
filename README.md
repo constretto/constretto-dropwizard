@@ -3,7 +3,7 @@ Dropwizard Constretto Bundle
 
 [![Build Status](https://travis-ci.org/constretto/constretto-dropwizard.svg?branch=master)](https://travis-ci.org/constretto/constretto-dropwizard)
 [![Coverage Status](https://img.shields.io/coveralls/constretto/constretto-dropwizard.svg?branch=master)](https://coveralls.io/r/constretto/constretto-dropwizard?branch=master)
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.constretto/constretto-dropwizard/badge.svg)](http://mvnrepository.com/artifact/org.constretto/constretto-dropwizard)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.constretto/constretto-dropwizard/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.constretto/constretto-dropwizard)
 
 Dropwizard bundle that allows use of constretto tags in yml-configuration like this:
 
