@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.constretto</groupId>
     <artifactId>constretto-dropwizard</artifactId>
-    <version>0.4-SNAPSHOT</version>
+    <version>1.0</version>
     <name>${project.groupId}:${project.artifactId}</name>
     <description>A Dropwizard bundle that allows use of Constretto tags in yml-configuration</description>
     <url>https://github.com/constretto/constretto-dropwizard</url>
@@ -40,7 +40,7 @@
 
     <issueManagement>
         <system>github</system>
-        <url>https://github.com/constretto/constretto-core/issues</url>
+        <url>https://github.com/constretto/constretto-dropwizard/issues</url>
     </issueManagement>
     <licenses>
         <license>
@@ -57,6 +57,7 @@
         <slf4j.version>1.7.7</slf4j.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
+
 
     <dependencies>
 
@@ -141,14 +142,36 @@
                             </execution>
                         </executions>
                     </plugin>
-
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                        <version>2.2.1</version>
+                        <executions>
+                            <execution>
+                                <id>attach-sources</id>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.sonatype.plugins</groupId>
+                        <artifactId>nexus-staging-maven-plugin</artifactId>
+                        <version>1.6.5</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <serverId>sonatype-nexus-staging</serverId>
+                            <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+                            <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                        </configuration>
+                    </plugin>
                 </plugins>
             </build>
         </profile>
     </profiles>
     <build>
         <plugins>
-
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -157,31 +180,6 @@
                     <source>1.7</source>
                     <target>1.7</target>
                     <encoding>UTF-8</encoding>
-                </configuration>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-source-plugin</artifactId>
-                <version>2.2.1</version>
-                <executions>
-                    <execution>
-                        <id>attach-sources</id>
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.sonatype.plugins</groupId>
-                <artifactId>nexus-staging-maven-plugin</artifactId>
-                <version>1.6.2</version>
-                <extensions>true</extensions>
-                <configuration>
-                    <serverId>sonatype-nexus-snapshot</serverId>
-                    <nexusUrl>https://oss.sonatype.org/</nexusUrl>
-                    <autoReleaseAfterClose>true</autoReleaseAfterClose>
                 </configuration>
             </plugin>
         </plugins>

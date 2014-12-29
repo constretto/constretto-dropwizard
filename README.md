@@ -48,11 +48,7 @@ public class MyApplication extends Application<Config> {
 Maven
 -----
 
-This component is currently not deployed in any publicly available maven repository (to be done)
-
-    git clone git@github.com:kjeivers/constretto-dropwizard.git
-    cd constretto-dropwizard
-    maven clean install
+This component is distributed through the Sonatype OSS Repository and should thus by widely available
 
 Add the dependency to your pom file:
 
@@ -60,9 +56,13 @@ Add the dependency to your pom file:
     <dependency>
         <groupId>org.constretto</groupId>
         <artifactId>constretto-dropwizard</artifactId>
-        <version>0.3</version>
+        <version>1.0</version>
     </dependency>
 ```
+
+Version 1.0
+-------------
+ * Release to Sonatype OSS
 
 Version 0.3
 ----------------
