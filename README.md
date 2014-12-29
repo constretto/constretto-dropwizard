@@ -2,6 +2,7 @@ Dropwizard Constretto Bundle
 ============================
 
 [![Build Status](https://travis-ci.org/constretto/constretto-dropwizard.svg?branch=master)](https://travis-ci.org/constretto/constretto-dropwizard)
+[![Coverage Status](https://coveralls.io/repos/constretto/constretto-dropwizard/badge.png?branch=master)](https://coveralls.io/r/constretto/constretto-dropwizard?branch=master)
 
 Dropwizard bundle that allows use of constretto tags in yml-configuration like this:
 
