@@ -1,0 +1,19 @@
+server:
+  type: simple
+  applicationContextPath: /application
+  adminContextPath: /admin
+  connector:
+    type: http
+    port: ${dropwizard.server.port}
+
+logging:
+  appenders:
+    - .testing:
+      type: console
+      threshold: DEBUG
+      target: stdout
+
+    - .staging:
+      type: console
+      threshold: INFO
+      target: stdout
