@@ -10,8 +10,8 @@ import com.fasterxml.jackson.dataformat.yaml.snakeyaml.error.MarkedYAMLException
 import com.fasterxml.jackson.dataformat.yaml.snakeyaml.error.YAMLException;
 import com.google.common.collect.ImmutableSet;
 import io.dropwizard.configuration.ConfigurationException;
-import io.dropwizard.configuration.ConfigurationFactory;
 import io.dropwizard.configuration.ConfigurationSourceProvider;
+import io.dropwizard.configuration.YamlConfigurationFactory;
 import org.constretto.resolver.ConfigurationContextResolver;
 
 import javax.validation.Validator;
@@ -35,7 +35,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  *
  * @author kjeivers
  */
-public class ConstrettoConfigurationFactory<T> extends ConfigurationFactory<T> {
+public class ConstrettoConfigurationFactory<T> extends YamlConfigurationFactory<T> {
 
     private final ObjectMapper mapper;
     private final YAMLFactory yamlFactory;
@@ -48,6 +48,7 @@ public class ConstrettoConfigurationFactory<T> extends ConfigurationFactory<T> {
         this.mapper = mapper;
         this.yamlFactory = new YAMLFactory();
     }
+
 
     /**
      * Loads, parses, binds, and validates a configuration object.
@@ -108,9 +109,10 @@ public class ConstrettoConfigurationFactory<T> extends ConfigurationFactory<T> {
             if (child.isObject() && child.size() > 0) {
                 Map.Entry<String, JsonNode> firstVal = child.fields().next();
                 String fieldName = firstVal.getKey();
+                String fieldValue = firstVal.getValue().asText();
                 // if the first child element consists of a constretto-tag and nothing more: '-.production'
                 if (fieldName.startsWith(".") && fieldName.indexOf('.', 1) == -1
-                        && "".equals(firstVal.getValue().asText()))
+                        && ("null".equals(fieldValue) || "".equals(fieldValue)))
                 {
                     String tag = fieldName.substring(1);
                     if (activeTags.contains(tag)) {
