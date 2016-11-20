@@ -5,6 +5,15 @@ Dropwizard Constretto Bundle
 [![Coverage Status](https://img.shields.io/coveralls/constretto/constretto-dropwizard.svg?branch=master)](https://coveralls.io/r/constretto/constretto-dropwizard?branch=master)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.constretto/constretto-dropwizard/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.constretto/constretto-dropwizard)
 
+Compabilty
+----------
+
+Constretto DropWizard | Dropwizard | Java 
+--------------------- | ---------- | ---- 
+1.1                   | > 1.0      | >= 8 
+1.0                   | < 1.0      | >= 7 
+
+
 Dropwizard bundle that allows use of constretto tags in yml-configuration like this:
 
 config.yml:
