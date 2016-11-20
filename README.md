@@ -58,9 +58,12 @@ Add the dependency to your pom file:
     <dependency>
         <groupId>org.constretto</groupId>
         <artifactId>constretto-dropwizard</artifactId>
-        <version>1.0</version>
+        <version>1.1</version>
     </dependency>
 ```
+Version 1.1
+------------
+ * Support for Dropwizard 1.X (thus dropping support for Java 7). Thanks to @garyschulte for PR
 
 Version 1.0
 -------------
