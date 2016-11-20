@@ -13,8 +13,10 @@ Constretto DropWizard | Dropwizard | Java
 1.1                   | > 1.0      | >= 8 
 1.0                   | < 1.0      | >= 7 
 
+What is it for?
+----------------
 
-Dropwizard bundle that allows use of constretto tags in yml-configuration like this:
+Dropwizard bundle that allows use of [Constretto](http://constretto.org) tags in yml-configuration like this:
 
 config.yml:
 
